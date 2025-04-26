@@ -1,0 +1,148 @@
+<script setup>
+  import { reactive, onMounted, ref, watch } from 'vue'
+  import OBSWebSocket from 'obs-websocket-js'
+
+  const obs = new OBSWebSocket()
+  const checklist = reactive([
+    { 
+      label: 'Step 1: Mic Check', 
+      checked: false 
+    },
+    { label: 'Step 2: Camera Ready', checked: false },
+    { label: 'Step 3: Scene Live', checked: false },
+  ])
+  const newItem = ref('')
+
+  const obsUrl = import.meta.env.VITE_OBS_URL
+  const obsPassword = import.meta.env.VITE_OBS_PASSWORD
+  const textNode = import.meta.env.VITE_OBS_TEXT_SOURCE
+
+  const connectOBS = async () => {
+    try {
+      await obs.connect(obsUrl, obsPassword)
+      console.log('Connected to OBS')
+    } catch (err) {
+      console.error('Failed to connect to OBS WebSocket:', err)
+    }
+  }
+
+  const updateObsText = async () => {
+    // Only show items that are *not* checked
+    // const visibleItems = checklist
+    //   .filter(i => !i.checked)
+    //   .map(i => `${i.label}`)
+    // const content = visibleItems.join('\n') || '✅ All tasks complete!'
+
+    const visibleItems = checklist.value.filter(item => !item.checked)
+    const text = visibleItems.map(item => `${item.label}`).join('\n')
+
+    try {
+      await obs.call('SetInputSettings', {
+        inputName: textNode, // Match your actual OBS text source name
+        inputSettings: { text: content }
+      })
+    } catch (err) {
+      console.error('Failed to update OBS text source:', err)
+    }
+  }
+
+  // Add an item
+  function addItem() {
+    const trimmed = newItem.value.trim()
+    if (trimmed) {
+      checklist.value.push(
+        { 
+          label: trimmed, 
+          checked: false 
+        }
+      )
+      newItem.value = ''
+      updateObsText()
+    }
+  }
+
+  // Remove an item
+  function removeItem(index) {
+    console.log(checklist)
+    checklist.value.splice(index, 1)
+    updateObsText()
+  }
+
+  onMounted(() => {
+    connectOBS()
+  });
+</script>
+
+<template>
+  <div class="queue-body">
+    <h2 class="queue-body--header">Queue</h2>
+    <div class="queue-body--controls">
+      <input v-model="newItem" @keydown.enter="addItem" placeholder="Add a new task" />
+      <button @click="addItem">Add</button>
+    </div>
+    <ul class="queue-body--list">
+      <li class="queue-body--list_item" v-for="(item, index) in checklist" :key="index"
+        :style="{ opacity: item.checked ? 0.5 : 1, textDecoration: item.checked ? 'line-through' : 'none' }">
+
+        <input type="checkbox" v-model="item.checked" @change="updateObsText" />
+        <span :class="{ 'line-through text-gray-500': item.checked }">{{ item.label }}</span>
+        <button @click="removeItem(index)">❌</button>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<style>
+  *,*:before,*:after {
+    box-sizing: border-box;
+  }
+  html, body, #app {
+    font-family: monospace;
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    width: 100%;
+    text-align: left;
+  }
+
+  body {
+    display: block;
+    overflow: hidden;
+    accent-color: #15e;
+  }
+
+  #app {
+    overflow: auto;
+  }
+
+  .queue-body {
+    display: flex;
+    flex-flow: column;
+    padding: 1rem;
+    gap: 1rem;
+
+    .queue-body--header {
+      margin: 0;
+      font-weight: 900;
+    }
+
+    .queue-body--list {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      list-style-type: none;
+      margin: 0;
+      padding: 0;
+      & .queue-body--list_item {
+        cursor: pointer;
+        label {
+          display: flex;
+          align-items: center;
+          gap: 1rem;
+          input[type="checkbox"] {}
+        }
+      }
+    }
+  }
+
+</style>
