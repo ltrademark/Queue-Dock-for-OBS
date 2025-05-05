@@ -33,7 +33,6 @@ Follow these steps to get the OBS Queue Dock running locally:
 git clone https://github.com/ltrademark/Queue-Dock-for-OBS.git
 cd queue-dock-for-obs
 ```
-(Replace <your-repository-url> with the actual URL of your GitHub repository)
 
 **2. Install Dependencies**
 
