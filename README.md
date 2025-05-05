@@ -71,7 +71,9 @@ VITE_OBS_PASSWORD=your_obs_websocket_password
 VITE_OBS_TEXT_SOURCE=QueueDisplay
 ```
 
-> Important: **Make sure your .gitignore file includes .env to prevent accidentally committing your password.Running the Dock**
+> Important: **Make sure your .gitignore file includes .env to prevent accidentally committing your password.**
+
+## Running the Dock
 
 **1. Start the Development Server**
   - `npm run dev` or `yarn dev`
